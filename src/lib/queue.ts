@@ -8,7 +8,6 @@ interface QueueItem {
 
 class RequestQueue {
   private queue: QueueItem[] = [];
-  private processing = false;
   private concurrency = 2;
   private activeCount = 0;
 

@@ -63,19 +63,11 @@ export default function HistoryPanel({
               key={item.id}
               className="rounded-xl border border-white/10 bg-white/[0.03] p-3 hover:border-white/20 transition-all"
             >
-              {/* Preview thumbnails */}
-              {item.images.length > 0 && (
-                <div className="grid grid-cols-2 gap-1 mb-2">
-                  {item.images.slice(0, 4).map((img, i) => (
-                    <img
-                      key={i}
-                      src={`data:image/png;base64,${img}`}
-                      alt={`History ${i}`}
-                      className="h-16 w-full rounded object-cover"
-                    />
-                  ))}
-                </div>
-              )}
+              {/* Provider badge */}
+              <div className="mb-2 flex items-center gap-1.5">
+                <div className="h-1.5 w-1.5 rounded-full bg-green-400" />
+                <span className="text-[10px] text-white/40">{item.provider}</span>
+              </div>
 
               {/* Prompt */}
               <p className="text-xs text-white/70 line-clamp-2 mb-2">

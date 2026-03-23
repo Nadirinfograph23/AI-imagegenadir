@@ -37,7 +37,8 @@ export default function Home() {
     try {
       const toSave = newHistory.slice(0, 20).map((item) => ({
         ...item,
-        images: item.images.slice(0, 1).map((img) => img.substring(0, 500)),
+        // Store only prompt/metadata, not full image data (too large for localStorage)
+        images: [],
       }));
       localStorage.setItem('micro-banana-history', JSON.stringify(toSave));
     } catch {

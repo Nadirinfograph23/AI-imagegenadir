@@ -75,92 +75,83 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Generate images with fallback system
+    // Generate images with fallback system (parallel)
     const images: string[] = [];
     let successProvider = '';
     const errors: string[] = [];
-
-    // Generate 4 images (try to get multiple)
     const numImages = 4;
 
+    // Helper: generate a single image with fallback
+    async function generateOne(
+      index: number,
+      txt2imgFn: (p: string) => Promise<Buffer>,
+      fallbackFn: (p: string) => Promise<Buffer>,
+      primaryName: string,
+      fallbackName: string,
+      extraPrompt: string
+    ): Promise<{ image: string; provider: string } | null> {
+      const variantPrompt = extraPrompt + (index > 0 ? `, variation ${index + 1}` : '');
+
+      // Try primary provider
+      try {
+        const buffer = await txt2imgFn(variantPrompt);
+        return { image: buffer.toString('base64'), provider: primaryName };
+      } catch (error) {
+        const errMsg = error instanceof Error ? error.message : 'Unknown error';
+        errors.push(`${primaryName} [${index}]: ${errMsg}`);
+      }
+
+      // Fallback provider
+      try {
+        const buffer = await fallbackFn(variantPrompt);
+        return { image: buffer.toString('base64'), provider: fallbackName };
+      } catch (error) {
+        const errMsg = error instanceof Error ? error.message : 'Unknown error';
+        errors.push(`${fallbackName} [${index}]: ${errMsg}`);
+      }
+
+      return null;
+    }
+
     if (mode === 'text-to-image') {
-      // Provider chain: HuggingFace SDXL → Stable Horde
-      for (let i = 0; i < numImages; i++) {
-        let generated = false;
+      // Run all 4 generations in parallel with fallback
+      const promises = Array.from({ length: numImages }, (_, i) =>
+        generateOne(
+          i,
+          generateWithHuggingFaceSDXL,
+          generateWithStableHorde,
+          'HuggingFace SDXL',
+          'Stable Horde',
+          prompt
+        )
+      );
 
-        // Try HuggingFace SDXL first
-        try {
-          const buffer = await generateWithHuggingFaceSDXL(
-            prompt + (i > 0 ? ` variation ${i + 1}` : '')
-          );
-          images.push(buffer.toString('base64'));
-          successProvider = 'HuggingFace SDXL';
-          generated = true;
-        } catch (error) {
-          const errMsg = error instanceof Error ? error.message : 'Unknown error';
-          errors.push(`HF SDXL [${i}]: ${errMsg}`);
-        }
-
-        // Fallback to Stable Horde
-        if (!generated) {
-          try {
-            const buffer = await generateWithStableHorde(
-              prompt + (i > 0 ? ` variation ${i + 1}` : '')
-            );
-            images.push(buffer.toString('base64'));
-            if (!successProvider) successProvider = 'Stable Horde';
-            generated = true;
-          } catch (error) {
-            const errMsg = error instanceof Error ? error.message : 'Unknown error';
-            errors.push(`Stable Horde [${i}]: ${errMsg}`);
-          }
-        }
-
-        // If we got at least 1 image and the rest are failing, break early
-        if (!generated && images.length > 0 && i >= 2) {
-          break;
+      const results = await Promise.allSettled(promises);
+      for (const result of results) {
+        if (result.status === 'fulfilled' && result.value) {
+          images.push(result.value.image);
+          if (!successProvider) successProvider = result.value.provider;
         }
       }
     } else {
-      // Image-to-image mode
-      // Provider chain: HuggingFace Pix2Pix → Stable Horde Img2Img
+      // Image-to-image mode (parallel with fallback)
       const imageData = image!;
+      const promises = Array.from({ length: numImages }, (_, i) =>
+        generateOne(
+          i,
+          (p) => generateWithHuggingFacePix2Pix(p, imageData),
+          (p) => generateWithStableHordeImg2Img(p, imageData),
+          'HuggingFace Pix2Pix',
+          'Stable Horde Img2Img',
+          prompt
+        )
+      );
 
-      for (let i = 0; i < numImages; i++) {
-        let generated = false;
-
-        // Try HuggingFace Pix2Pix first
-        try {
-          const buffer = await generateWithHuggingFacePix2Pix(
-            prompt + (i > 0 ? `, variation ${i + 1}` : ''),
-            imageData
-          );
-          images.push(buffer.toString('base64'));
-          successProvider = 'HuggingFace Pix2Pix';
-          generated = true;
-        } catch (error) {
-          const errMsg = error instanceof Error ? error.message : 'Unknown error';
-          errors.push(`HF Pix2Pix [${i}]: ${errMsg}`);
-        }
-
-        // Fallback to Stable Horde Img2Img
-        if (!generated) {
-          try {
-            const buffer = await generateWithStableHordeImg2Img(
-              prompt + (i > 0 ? `, variation ${i + 1}` : ''),
-              imageData
-            );
-            images.push(buffer.toString('base64'));
-            if (!successProvider) successProvider = 'Stable Horde Img2Img';
-            generated = true;
-          } catch (error) {
-            const errMsg = error instanceof Error ? error.message : 'Unknown error';
-            errors.push(`Stable Horde Img2Img [${i}]: ${errMsg}`);
-          }
-        }
-
-        if (!generated && images.length > 0 && i >= 2) {
-          break;
+      const results = await Promise.allSettled(promises);
+      for (const result of results) {
+        if (result.status === 'fulfilled' && result.value) {
+          images.push(result.value.image);
+          if (!successProvider) successProvider = result.value.provider;
         }
       }
     }

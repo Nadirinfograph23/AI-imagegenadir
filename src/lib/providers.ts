@@ -295,9 +295,3 @@ export async function generateWithStableHordeImg2Img(
 
   throw new Error('Stable Horde img2img generation timed out');
 }
-
-export type ProviderName =
-  | 'HuggingFace SDXL'
-  | 'HuggingFace Pix2Pix'
-  | 'Stable Horde'
-  | 'Stable Horde Img2Img';
