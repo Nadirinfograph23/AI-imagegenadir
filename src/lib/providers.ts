@@ -1,6 +1,43 @@
 const HF_API_KEYS = (process.env.HF_API_KEYS || '').split(',').filter(Boolean);
 const STABLE_HORDE_API_KEY = process.env.STABLE_HORDE_API_KEY || '0000000000';
 
+// Aspect ratio to pixel dimensions mapping
+// SDXL works best with multiples of 64, total pixels near 1024x1024
+const ASPECT_RATIO_DIMENSIONS: Record<string, { width: number; height: number }> = {
+  '1:1':  { width: 1024, height: 1024 },
+  '3:4':  { width: 896, height: 1152 },
+  '4:3':  { width: 1152, height: 896 },
+  '9:16': { width: 768, height: 1344 },
+  '16:9': { width: 1344, height: 768 },
+  '3:2':  { width: 1216, height: 832 },
+  '2:3':  { width: 832, height: 1216 },
+  '5:4':  { width: 1152, height: 896 },
+  '4:5':  { width: 896, height: 1152 },
+  '21:9': { width: 1536, height: 640 },
+};
+
+// Stable Horde uses smaller dimensions (max 512-768 range)
+const STABLE_HORDE_DIMENSIONS: Record<string, { width: number; height: number }> = {
+  '1:1':  { width: 512, height: 512 },
+  '3:4':  { width: 448, height: 576 },
+  '4:3':  { width: 576, height: 448 },
+  '9:16': { width: 384, height: 672 },
+  '16:9': { width: 672, height: 384 },
+  '3:2':  { width: 608, height: 416 },
+  '2:3':  { width: 416, height: 608 },
+  '5:4':  { width: 576, height: 448 },
+  '4:5':  { width: 448, height: 576 },
+  '21:9': { width: 768, height: 320 },
+};
+
+export function getDimensions(aspectRatio: string): { width: number; height: number } {
+  return ASPECT_RATIO_DIMENSIONS[aspectRatio] || ASPECT_RATIO_DIMENSIONS['1:1'];
+}
+
+export function getStableHordeDimensions(aspectRatio: string): { width: number; height: number } {
+  return STABLE_HORDE_DIMENSIONS[aspectRatio] || STABLE_HORDE_DIMENSIONS['1:1'];
+}
+
 function getRandomHFKey(): string {
   if (HF_API_KEYS.length === 0) return '';
   return HF_API_KEYS[Math.floor(Math.random() * HF_API_KEYS.length)];
@@ -25,10 +62,13 @@ async function fetchWithTimeout(
 }
 
 export async function generateWithHuggingFaceSDXL(
-  prompt: string
+  prompt: string,
+  aspectRatio: string = '1:1'
 ): Promise<Buffer> {
   const apiKey = getRandomHFKey();
   if (!apiKey) throw new Error('No HuggingFace API keys configured');
+
+  const dims = getDimensions(aspectRatio);
 
   const response = await fetchWithTimeout(
     'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0',
@@ -43,6 +83,8 @@ export async function generateWithHuggingFaceSDXL(
         parameters: {
           num_inference_steps: 30,
           guidance_scale: 7.5,
+          width: dims.width,
+          height: dims.height,
         },
       }),
     },
@@ -100,8 +142,11 @@ export async function generateWithHuggingFacePix2Pix(
 }
 
 export async function generateWithStableHorde(
-  prompt: string
+  prompt: string,
+  aspectRatio: string = '1:1'
 ): Promise<Buffer> {
+  const dims = getStableHordeDimensions(aspectRatio);
+
   // Step 1: Submit generation request
   const submitResponse = await fetchWithTimeout(
     'https://stablehorde.net/api/v2/generate/async',
@@ -116,8 +161,8 @@ export async function generateWithStableHorde(
         params: {
           sampler_name: 'k_euler',
           cfg_scale: 7.5,
-          height: 512,
-          width: 512,
+          height: dims.height,
+          width: dims.width,
           steps: 30,
           n: 1,
         },
@@ -200,8 +245,11 @@ export async function generateWithStableHorde(
 
 export async function generateWithStableHordeImg2Img(
   prompt: string,
-  imageBase64: string
+  imageBase64: string,
+  aspectRatio: string = '1:1'
 ): Promise<Buffer> {
+  const dims = getStableHordeDimensions(aspectRatio);
+
   const submitResponse = await fetchWithTimeout(
     'https://stablehorde.net/api/v2/generate/async',
     {
@@ -215,8 +263,8 @@ export async function generateWithStableHordeImg2Img(
         params: {
           sampler_name: 'k_euler',
           cfg_scale: 7.5,
-          height: 512,
-          width: 512,
+          height: dims.height,
+          width: dims.width,
           steps: 30,
           denoising_strength: 0.6,
           n: 1,

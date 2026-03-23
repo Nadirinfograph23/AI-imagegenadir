@@ -72,6 +72,7 @@ export default function Home() {
               prompt,
               mode,
               image: image || undefined,
+              aspectRatio,
             }),
           });
 

@@ -12,6 +12,7 @@ interface GenerateRequestBody {
   prompt: string;
   image?: string;
   mode: 'text-to-image' | 'image-to-image';
+  aspectRatio?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body: GenerateRequestBody = await request.json();
-    const { prompt, image, mode } = body;
+    const { prompt, image, mode, aspectRatio = '1:1' } = body;
 
     if (!prompt || prompt.trim().length === 0) {
       return NextResponse.json(
@@ -84,17 +85,18 @@ export async function POST(request: NextRequest) {
     // Helper: generate a single image with fallback
     async function generateOne(
       index: number,
-      txt2imgFn: (p: string) => Promise<Buffer>,
-      fallbackFn: (p: string) => Promise<Buffer>,
+      txt2imgFn: (p: string, ar: string) => Promise<Buffer>,
+      fallbackFn: (p: string, ar: string) => Promise<Buffer>,
       primaryName: string,
       fallbackName: string,
-      extraPrompt: string
+      extraPrompt: string,
+      ar: string
     ): Promise<{ image: string; provider: string } | null> {
       const variantPrompt = extraPrompt + (index > 0 ? `, variation ${index + 1}` : '');
 
       // Try primary provider
       try {
-        const buffer = await txt2imgFn(variantPrompt);
+        const buffer = await txt2imgFn(variantPrompt, ar);
         return { image: buffer.toString('base64'), provider: primaryName };
       } catch (error) {
         const errMsg = error instanceof Error ? error.message : 'Unknown error';
@@ -103,7 +105,7 @@ export async function POST(request: NextRequest) {
 
       // Fallback provider
       try {
-        const buffer = await fallbackFn(variantPrompt);
+        const buffer = await fallbackFn(variantPrompt, ar);
         return { image: buffer.toString('base64'), provider: fallbackName };
       } catch (error) {
         const errMsg = error instanceof Error ? error.message : 'Unknown error';
@@ -118,11 +120,12 @@ export async function POST(request: NextRequest) {
       const promises = Array.from({ length: numImages }, (_, i) =>
         generateOne(
           i,
-          generateWithHuggingFaceSDXL,
-          generateWithStableHorde,
+          (p, ar) => generateWithHuggingFaceSDXL(p, ar),
+          (p, ar) => generateWithStableHorde(p, ar),
           'HuggingFace SDXL',
           'Stable Horde',
-          prompt
+          prompt,
+          aspectRatio
         )
       );
 
@@ -140,10 +143,11 @@ export async function POST(request: NextRequest) {
         generateOne(
           i,
           (p) => generateWithHuggingFacePix2Pix(p, imageData),
-          (p) => generateWithStableHordeImg2Img(p, imageData),
+          (p, ar) => generateWithStableHordeImg2Img(p, imageData, ar),
           'HuggingFace Pix2Pix',
           'Stable Horde Img2Img',
-          prompt
+          prompt,
+          aspectRatio
         )
       );
 
