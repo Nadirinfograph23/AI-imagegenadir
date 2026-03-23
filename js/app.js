@@ -1,5 +1,5 @@
 /**
- * MACRO BANANA - AI Image Generator & Editor
+ * IMAGE EDITOR - AI Image Generator & Editor
  *
  * Development: حوامرية نذير - NADIR INFOGRAPH
  */
@@ -91,7 +91,7 @@ navLinks.forEach((link) => {
             tabGen.classList.add('active');
             tabEdit.classList.remove('active');
             heroSubtitle.textContent = 'Transform your ideas into stunning images with AI';
-            heroEmoji.textContent = '\u{1F34C}';
+            heroEmoji.textContent = '\u{1F5BC}\uFE0F';
         } else {
             tabGen.classList.remove('active');
             tabEdit.classList.add('active');
@@ -274,7 +274,7 @@ async function handleGenerate() {
         }, 2000);
 
     } catch (err) {
-        console.error('[MACRO BANANA] Generation failed:', err);
+        console.error('[IMAGE EDITOR] Generation failed:', err);
         showStatus(`Error: ${err.message}`, 1);
         progressFill.style.background = 'var(--error)';
 
@@ -337,7 +337,7 @@ downloadBtn.addEventListener('click', async () => {
 
         const link = document.createElement('a');
         link.href = blobUrl;
-        link.download = `macro-banana-${Date.now()}.png`;
+        link.download = `image-editor-${Date.now()}.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -465,6 +465,7 @@ async function getEditClient() {
 
 /* -- File upload handling -- */
 editUploadArea.addEventListener('click', (e) => {
+    if (e.target === editFileInput) return;
     if (!editUploadArea.classList.contains('has-image')) {
         editFileInput.click();
     }
@@ -649,7 +650,7 @@ async function handleEdit() {
         }, 2000);
 
     } catch (err) {
-        console.error('[MACRO BANANA] Edit failed:', err);
+        console.error('[IMAGE EDITOR] Edit failed:', err);
         showEditStatus(`Error: ${err.message}`, 1);
         editProgressFill.style.background = 'var(--error)';
 
@@ -696,7 +697,7 @@ editDownloadBtn.addEventListener('click', async () => {
 
         const link = document.createElement('a');
         link.href = blobUrl;
-        link.download = `macro-banana-edit-${Date.now()}.png`;
+        link.download = `image-editor-edit-${Date.now()}.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
