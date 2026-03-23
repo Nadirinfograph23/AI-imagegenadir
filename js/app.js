@@ -105,6 +105,18 @@ navLinks.forEach((link) => {
 });
 
 /* ------------------------------------------------------------------ */
+/*  Upload button in gen tab → switch to edit tab                      */
+/* ------------------------------------------------------------------ */
+
+const uploadBtn = $('#upload-btn');
+uploadBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    // Simulate clicking the "Image Edit" nav link
+    const editLink = document.querySelector('.nav-link[data-section="edit"]');
+    if (editLink) editLink.click();
+});
+
+/* ------------------------------------------------------------------ */
 /*  Auto-resize textarea                                               */
 /* ------------------------------------------------------------------ */
 
