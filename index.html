@@ -27,7 +27,7 @@
             </a>
             <div class="nav-links">
                 <a href="#" class="nav-link active" data-section="gen">Image</a>
-                <a href="#edit-section" class="nav-link" data-section="edit">Image Edit</a>
+                <a href="#" class="nav-link" data-section="edit">Image Edit</a>
             </div>
         </div>
         <div class="nav-right">
@@ -37,156 +37,151 @@
 
     <!-- Main Content -->
     <main class="main-container">
-        <!-- Hero Section -->
+        <!-- Hero Section (shared) -->
         <div class="hero-section">
-                <div class="hero-icon">
-                    <span class="hero-banana">🍌</span>
-                    <div class="hero-sparkle">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                            <path d="M8 0L9.5 6.5L16 8L9.5 9.5L8 16L6.5 9.5L0 8L6.5 6.5L8 0Z" fill="#d4f900"/>
-                        </svg>
-                    </div>
+            <div class="hero-icon">
+                <span class="hero-banana" id="hero-emoji">&#127820;</span>
+                <div class="hero-sparkle">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 0L9.5 6.5L16 8L9.5 9.5L8 16L6.5 9.5L0 8L6.5 6.5L8 0Z" fill="#d4f900"/>
+                    </svg>
                 </div>
+            </div>
 
             <h1 class="hero-title">MACRO <span class="highlight">BANANA</span></h1>
-            <p class="hero-subtitle">Transform your ideas into stunning images with AI</p>
+            <p class="hero-subtitle" id="hero-subtitle">Transform your ideas into stunning images with AI</p>
         </div>
 
-        <!-- Prompt Input Area -->
-        <div class="prompt-container">
-            <div class="prompt-box">
-                <div class="prompt-input-wrapper">
-                    <button class="upload-icon-btn" id="upload-btn" title="Upload reference image">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <polyline points="17 8 12 3 7 8"/>
-                            <line x1="12" y1="3" x2="12" y2="15"/>
-                        </svg>
-                    </button>
-                    <textarea id="prompt-input" class="prompt-input" placeholder="Describe the image you want to create" rows="1"></textarea>
-                </div>
-
-                <div class="prompt-controls">
-                    <div class="control-pills">
-                        <div class="pill model-pill">
-                            <span class="pill-dot"></span>
-                            <span>Image AI</span>
-                        </div>
-                        <div class="pill aspect-pill" id="aspect-toggle">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <!-- ============================================================ -->
+        <!-- IMAGE GENERATION TAB                                          -->
+        <!-- ============================================================ -->
+        <div class="tab-content active" id="tab-gen">
+            <!-- Prompt Input Area -->
+            <div class="prompt-container">
+                <div class="prompt-box">
+                    <div class="prompt-input-wrapper">
+                        <button class="upload-icon-btn" id="upload-btn" title="Upload reference image">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
                             </svg>
-                            <span id="aspect-label">1:1</span>
-                        </div>
+                        </button>
+                        <textarea id="prompt-input" class="prompt-input" placeholder="Describe the image you want to create" rows="1"></textarea>
                     </div>
 
-                    <button class="generate-btn" id="generate-btn">
-                        <span class="btn-text">Generate</span>
-                        <svg class="btn-sparkle" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                            <path d="M8 0L9.5 6.5L16 8L9.5 9.5L8 16L6.5 9.5L0 8L6.5 6.5L8 0Z" fill="currentColor"/>
-                        </svg>
-                        <span class="btn-loading hidden">
-                            <span class="spinner"></span>
-                        </span>
+                    <div class="prompt-controls">
+                        <div class="control-pills">
+                            <div class="pill model-pill">
+                                <span class="pill-dot"></span>
+                                <span>Image AI</span>
+                            </div>
+                            <div class="pill aspect-pill" id="aspect-toggle">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                </svg>
+                                <span id="aspect-label">1:1</span>
+                            </div>
+                        </div>
+
+                        <button class="generate-btn" id="generate-btn">
+                            <span class="btn-text">Generate</span>
+                            <svg class="btn-sparkle" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M8 0L9.5 6.5L16 8L9.5 9.5L8 16L6.5 9.5L0 8L6.5 6.5L8 0Z" fill="currentColor"/>
+                            </svg>
+                            <span class="btn-loading hidden">
+                                <span class="spinner"></span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Aspect Ratio Dropdown -->
+                <div class="aspect-dropdown hidden" id="aspect-dropdown">
+                    <button class="aspect-option active" data-ratio="1:1" data-w="1024" data-h="1024">1:1 Square</button>
+                    <button class="aspect-option" data-ratio="16:9" data-w="1024" data-h="576">16:9 Landscape</button>
+                    <button class="aspect-option" data-ratio="9:16" data-w="576" data-h="1024">9:16 Portrait</button>
+                    <button class="aspect-option" data-ratio="4:3" data-w="1024" data-h="768">4:3 Standard</button>
+                    <button class="aspect-option" data-ratio="3:4" data-w="768" data-h="1024">3:4 Portrait</button>
+                    <button class="aspect-option" data-ratio="21:9" data-w="1344" data-h="576">21:9 Cinematic</button>
+                </div>
+            </div>
+
+            <!-- Status Bar -->
+            <div id="status-bar" class="status-bar hidden">
+                <div class="status-text" id="status-text">Generating...</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+            </div>
+
+            <!-- Result Area -->
+            <div id="result-area" class="result-area hidden">
+                <div class="result-image-container">
+                    <img id="result-image" alt="Generated image">
+                </div>
+                <div class="result-footer">
+                    <div class="result-meta" id="result-meta"></div>
+                    <div class="result-actions">
+                        <button id="download-btn" class="action-btn" title="Download">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sample Prompts -->
+            <div class="sample-prompts" id="sample-prompts">
+                <p class="sample-title">Try these prompts</p>
+                <div class="sample-grid">
+                    <button class="sample-card" data-prompt="Young Chinese woman in red Hanfu, intricate embroidery, Imperial palace garden background, cinematic lighting, 8k resolution">
+                        <span class="sample-text">Young Chinese woman in red Hanfu, intricate embroidery...</span>
+                    </button>
+                    <button class="sample-card" data-prompt="A majestic dragon soaring through clouds at sunset, scales shimmering with golden light, fantasy art style, highly detailed">
+                        <span class="sample-text">A majestic dragon soaring through clouds at sunset...</span>
+                    </button>
+                    <button class="sample-card" data-prompt="Cozy coffee shop interior, warm lighting, rain on windows, photorealistic, depth of field, autumn atmosphere">
+                        <span class="sample-text">Cozy coffee shop interior, warm lighting, rain on windows...</span>
+                    </button>
+                    <button class="sample-card" data-prompt="Astronaut riding a horse on Mars, cinematic lighting, sci-fi landscape, photorealistic, ultra detailed">
+                        <span class="sample-text">Astronaut riding a horse on Mars, cinematic lighting...</span>
+                    </button>
+                    <button class="sample-card" data-prompt="Portrait of a wise old wizard with a long white beard, holding a glowing crystal staff, dark mystical forest background">
+                        <span class="sample-text">Portrait of a wise old wizard with a long white beard...</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Aspect Ratio Dropdown -->
-            <div class="aspect-dropdown hidden" id="aspect-dropdown">
-                <button class="aspect-option active" data-ratio="1:1" data-w="1024" data-h="1024">1:1 Square</button>
-                <button class="aspect-option" data-ratio="16:9" data-w="1024" data-h="576">16:9 Landscape</button>
-                <button class="aspect-option" data-ratio="9:16" data-w="576" data-h="1024">9:16 Portrait</button>
-                <button class="aspect-option" data-ratio="4:3" data-w="1024" data-h="768">4:3 Standard</button>
-                <button class="aspect-option" data-ratio="3:4" data-w="768" data-h="1024">3:4 Portrait</button>
-                <button class="aspect-option" data-ratio="21:9" data-w="1344" data-h="576">21:9 Cinematic</button>
+            <!-- History -->
+            <div id="history-section" class="history-section hidden">
+                <h3>Recent Generations</h3>
+                <div id="history-grid" class="history-grid"></div>
             </div>
         </div>
 
-        <!-- Status Bar -->
-        <div id="status-bar" class="status-bar hidden">
-            <div class="status-text" id="status-text">Generating...</div>
-            <div class="progress-bar">
-                <div class="progress-fill" id="progress-fill"></div>
-            </div>
-        </div>
-
-        <!-- Result Area -->
-        <div id="result-area" class="result-area hidden">
-            <div class="result-image-container">
-                <img id="result-image" alt="Generated image">
-            </div>
-            <div class="result-footer">
-                <div class="result-meta" id="result-meta"></div>
-                <div class="result-actions">
-                    <button id="download-btn" class="action-btn" title="Download">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <polyline points="7 10 12 15 17 10"/>
-                            <line x1="12" y1="15" x2="12" y2="3"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sample Prompts -->
-        <div class="sample-prompts" id="sample-prompts">
-            <p class="sample-title">Try these prompts</p>
-            <div class="sample-grid">
-                <button class="sample-card" data-prompt="Young Chinese woman in red Hanfu, intricate embroidery, Imperial palace garden background, cinematic lighting, 8k resolution">
-                    <span class="sample-text">Young Chinese woman in red Hanfu, intricate embroidery...</span>
-                </button>
-                <button class="sample-card" data-prompt="A majestic dragon soaring through clouds at sunset, scales shimmering with golden light, fantasy art style, highly detailed">
-                    <span class="sample-text">A majestic dragon soaring through clouds at sunset...</span>
-                </button>
-                <button class="sample-card" data-prompt="Cozy coffee shop interior, warm lighting, rain on windows, photorealistic, depth of field, autumn atmosphere">
-                    <span class="sample-text">Cozy coffee shop interior, warm lighting, rain on windows...</span>
-                </button>
-                <button class="sample-card" data-prompt="Astronaut riding a horse on Mars, cinematic lighting, sci-fi landscape, photorealistic, ultra detailed">
-                    <span class="sample-text">Astronaut riding a horse on Mars, cinematic lighting...</span>
-                </button>
-                <button class="sample-card" data-prompt="Portrait of a wise old wizard with a long white beard, holding a glowing crystal staff, dark mystical forest background">
-                    <span class="sample-text">Portrait of a wise old wizard with a long white beard...</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- History -->
-        <div id="history-section" class="history-section hidden">
-            <h3>Recent Generations</h3>
-            <div id="history-grid" class="history-grid"></div>
-        </div>
-
-        <!-- Section Divider -->
-        <div class="section-divider">
-            <div class="divider-line"></div>
-            <span class="divider-text">Image Editing</span>
-            <div class="divider-line"></div>
-        </div>
-
-        <!-- Image Edit Section -->
-        <div class="edit-section" id="edit-section">
-            <div class="edit-hero">
-                <span class="edit-icon">✨</span>
-                <h2 class="edit-title">AI <span class="highlight">Image Editor</span></h2>
-                <p class="edit-subtitle">Upload an image and transform it with AI-powered editing styles</p>
-            </div>
-
-            <div class="edit-container">
-                <div class="edit-inputs">
-                    <!-- Upload Area -->
-                    <div class="edit-upload-area" id="edit-upload-area">
+        <!-- ============================================================ -->
+        <!-- IMAGE EDIT TAB                                                -->
+        <!-- ============================================================ -->
+        <div class="tab-content" id="tab-edit">
+            <!-- Edit Prompt Container (same structure as gen) -->
+            <div class="prompt-container">
+                <div class="prompt-box">
+                    <!-- Upload Area inside the prompt box -->
+                    <div class="edit-upload-inline" id="edit-upload-area">
                         <input type="file" id="edit-file-input" accept="image/*" class="hidden">
-                        <div class="upload-placeholder" id="edit-upload-placeholder">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <div class="upload-placeholder-inline" id="edit-upload-placeholder">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                                 <polyline points="17 8 12 3 7 8"/>
                                 <line x1="12" y1="3" x2="12" y2="15"/>
                             </svg>
                             <span>Drop image here or click to upload</span>
                         </div>
-                        <div class="upload-preview hidden" id="edit-upload-preview">
+                        <div class="upload-preview-inline hidden" id="edit-upload-preview">
                             <img id="edit-preview-img" alt="Upload preview">
                             <button class="remove-upload-btn" id="remove-upload-btn" title="Remove image">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -197,39 +192,26 @@
                         </div>
                     </div>
 
-                    <!-- Edit Prompt -->
-                    <div class="edit-prompt-box">
-                        <textarea id="edit-prompt-input" class="edit-prompt-input" placeholder="e.g., Transform into anime style..." rows="2"></textarea>
+                    <!-- Edit prompt text area -->
+                    <div class="prompt-input-wrapper">
+                        <textarea id="edit-prompt-input" class="prompt-input" placeholder="Describe how you want to edit the image..." rows="1"></textarea>
                     </div>
 
-                    <!-- Style Selector & Button -->
-                    <div class="edit-controls">
-                        <div class="style-selector">
-                            <label class="style-label">Editing Style</label>
-                            <select id="edit-style-select" class="style-select">
-                                <option value="Photo-to-Anime">Photo to Anime</option>
-                                <option value="Anime-V2">Anime V2</option>
-                                <option value="Hyper-Realistic-Portrait">Hyper Realistic Portrait</option>
-                                <option value="Ultra-Realistic-Portrait">Ultra Realistic Portrait</option>
-                                <option value="Multiple-Angles">Multiple Angles</option>
-                                <option value="Fal-Multiple-Angles">Fal Multiple Angles</option>
-                                <option value="Upscaler">Upscaler</option>
-                                <option value="Unblur-Anything">Unblur Anything</option>
-                                <option value="Polaroid-Photo">Polaroid Photo</option>
-                                <option value="Pixar-Inspired-3D">Pixar Inspired 3D</option>
-                                <option value="Noir-Comic-Book">Noir Comic Book</option>
-                                <option value="Manga-Tone">Manga Tone</option>
-                                <option value="Style-Transfer">Style Transfer</option>
-                                <option value="Anything2Real">Anything to Real</option>
-                                <option value="Cinematic-FlatLog">Cinematic FlatLog</option>
-                                <option value="Midnight-Noir-Eyes-Spotlight">Midnight Noir Eyes</option>
-                                <option value="Any-light">Any Light</option>
-                                <option value="Studio-DeLight">Studio DeLight</option>
-                                <option value="Light-Migration">Light Migration</option>
-                            </select>
+                    <div class="prompt-controls">
+                        <div class="control-pills">
+                            <div class="pill model-pill">
+                                <span class="pill-dot"></span>
+                                <span>Image Edit AI</span>
+                            </div>
+                            <div class="pill aspect-pill" id="style-toggle">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/>
+                                </svg>
+                                <span id="style-label">Photo to Anime</span>
+                            </div>
                         </div>
 
-                        <button class="generate-btn edit-btn" id="edit-btn">
+                        <button class="generate-btn" id="edit-btn">
                             <span class="btn-text">Edit Image</span>
                             <svg class="btn-sparkle" width="16" height="16" viewBox="0 0 16 16" fill="none">
                                 <path d="M8 0L9.5 6.5L16 8L9.5 9.5L8 16L6.5 9.5L0 8L6.5 6.5L8 0Z" fill="currentColor"/>
@@ -241,50 +223,73 @@
                     </div>
                 </div>
 
-                <!-- Edit Status Bar -->
-                <div id="edit-status-bar" class="status-bar hidden">
-                    <div class="status-text" id="edit-status-text">Processing...</div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" id="edit-progress-fill"></div>
+                <!-- Style Dropdown -->
+                <div class="aspect-dropdown hidden" id="style-dropdown">
+                    <button class="aspect-option active" data-style="Photo-to-Anime">Photo to Anime</button>
+                    <button class="aspect-option" data-style="Anime-V2">Anime V2</button>
+                    <button class="aspect-option" data-style="Hyper-Realistic-Portrait">Hyper Realistic Portrait</button>
+                    <button class="aspect-option" data-style="Ultra-Realistic-Portrait">Ultra Realistic Portrait</button>
+                    <button class="aspect-option" data-style="Multiple-Angles">Multiple Angles</button>
+                    <button class="aspect-option" data-style="Fal-Multiple-Angles">Fal Multiple Angles</button>
+                    <button class="aspect-option" data-style="Upscaler">Upscaler</button>
+                    <button class="aspect-option" data-style="Unblur-Anything">Unblur Anything</button>
+                    <button class="aspect-option" data-style="Polaroid-Photo">Polaroid Photo</button>
+                    <button class="aspect-option" data-style="Pixar-Inspired-3D">Pixar Inspired 3D</button>
+                    <button class="aspect-option" data-style="Noir-Comic-Book">Noir Comic Book</button>
+                    <button class="aspect-option" data-style="Manga-Tone">Manga Tone</button>
+                    <button class="aspect-option" data-style="Style-Transfer">Style Transfer</button>
+                    <button class="aspect-option" data-style="Anything2Real">Anything to Real</button>
+                    <button class="aspect-option" data-style="Cinematic-FlatLog">Cinematic FlatLog</button>
+                    <button class="aspect-option" data-style="Midnight-Noir-Eyes-Spotlight">Midnight Noir Eyes</button>
+                    <button class="aspect-option" data-style="Any-light">Any Light</button>
+                    <button class="aspect-option" data-style="Studio-DeLight">Studio DeLight</button>
+                    <button class="aspect-option" data-style="Light-Migration">Light Migration</button>
+                </div>
+            </div>
+
+            <!-- Edit Status Bar -->
+            <div id="edit-status-bar" class="status-bar hidden">
+                <div class="status-text" id="edit-status-text">Processing...</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="edit-progress-fill"></div>
+                </div>
+            </div>
+
+            <!-- Edit Result -->
+            <div id="edit-result-area" class="result-area hidden">
+                <div class="result-image-container">
+                    <img id="edit-result-image" alt="Edited image">
+                </div>
+                <div class="result-footer">
+                    <div class="result-meta" id="edit-result-meta"></div>
+                    <div class="result-actions">
+                        <button id="edit-download-btn" class="action-btn" title="Download">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="7 10 12 15 17 10"/>
+                                <line x1="12" y1="15" x2="12" y2="3"/>
+                            </svg>
+                        </button>
                     </div>
                 </div>
+            </div>
 
-                <!-- Edit Result -->
-                <div id="edit-result-area" class="result-area hidden">
-                    <div class="result-image-container">
-                        <img id="edit-result-image" alt="Edited image">
-                    </div>
-                    <div class="result-footer">
-                        <div class="result-meta" id="edit-result-meta"></div>
-                        <div class="result-actions">
-                            <button id="edit-download-btn" class="action-btn" title="Download">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                    <polyline points="7 10 12 15 17 10"/>
-                                    <line x1="12" y1="15" x2="12" y2="3"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Edit Examples -->
-                <div class="edit-examples" id="edit-examples">
-                    <p class="sample-title">Try these edits</p>
-                    <div class="sample-grid">
-                        <button class="sample-card" data-edit-prompt="Transform into anime." data-edit-style="Photo-to-Anime">
-                            <span class="sample-text">Transform into anime style</span>
-                        </button>
-                        <button class="sample-card" data-edit-prompt="Transform into a hyper-realistic face portrait." data-edit-style="Hyper-Realistic-Portrait">
-                            <span class="sample-text">Hyper-realistic portrait</span>
-                        </button>
-                        <button class="sample-card" data-edit-prompt="Upscale this picture to 4K resolution." data-edit-style="Upscaler">
-                            <span class="sample-text">Upscale to 4K resolution</span>
-                        </button>
-                        <button class="sample-card" data-edit-prompt="Rotate the camera 45 degrees to the right." data-edit-style="Multiple-Angles">
-                            <span class="sample-text">Rotate camera 45 degrees</span>
-                        </button>
-                    </div>
+            <!-- Edit Examples -->
+            <div class="sample-prompts" id="edit-examples">
+                <p class="sample-title">Try these edits</p>
+                <div class="sample-grid">
+                    <button class="sample-card" data-edit-prompt="Transform into anime." data-edit-style="Photo-to-Anime">
+                        <span class="sample-text">Transform into anime style</span>
+                    </button>
+                    <button class="sample-card" data-edit-prompt="Transform into a hyper-realistic face portrait." data-edit-style="Hyper-Realistic-Portrait">
+                        <span class="sample-text">Hyper-realistic portrait</span>
+                    </button>
+                    <button class="sample-card" data-edit-prompt="Upscale this picture to 4K resolution." data-edit-style="Upscaler">
+                        <span class="sample-text">Upscale to 4K resolution</span>
+                    </button>
+                    <button class="sample-card" data-edit-prompt="Rotate the camera 45 degrees to the right." data-edit-style="Multiple-Angles">
+                        <span class="sample-text">Rotate camera 45 degrees</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -292,7 +297,7 @@
 
     <!-- Footer -->
     <footer class="app-footer">
-        <p class="footer-credit">Development: <strong>حوامرية نذير</strong> — <strong>NADIR INFOGRAPH</strong></p>
+        <p class="footer-credit">Development: <strong>حوامرية نذير</strong> &mdash; <strong>NADIR INFOGRAPH</strong></p>
     </footer>
 
     <script type="module" src="js/app.js"></script>

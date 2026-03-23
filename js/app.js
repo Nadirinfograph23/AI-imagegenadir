@@ -19,6 +19,14 @@ const SPACE_NAME = "mrfakename/Z-Image-Turbo";
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
+/* -- Tab navigation -- */
+const navLinks = $$('.nav-link');
+const tabGen = $('#tab-gen');
+const tabEdit = $('#tab-edit');
+const heroSubtitle = $('#hero-subtitle');
+const heroEmoji = $('#hero-emoji');
+
+/* -- Image Generation refs -- */
 const promptInput = $('#prompt-input');
 const generateBtn = $('#generate-btn');
 const btnText = generateBtn.querySelector('.btn-text');
@@ -37,7 +45,7 @@ const downloadBtn = $('#download-btn');
 const aspectToggle = $('#aspect-toggle');
 const aspectLabel = $('#aspect-label');
 const aspectDropdown = $('#aspect-dropdown');
-const aspectOptions = $$('.aspect-option');
+const aspectOptions = $$('#aspect-dropdown .aspect-option');
 
 const samplePrompts = $('#sample-prompts');
 const sampleCards = $$('#sample-prompts .sample-card');
@@ -66,6 +74,32 @@ async function getClient() {
     }
     return gradioClient;
 }
+
+/* ------------------------------------------------------------------ */
+/*  Tab Navigation                                                     */
+/* ------------------------------------------------------------------ */
+
+navLinks.forEach((link) => {
+    link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const section = link.dataset.section;
+
+        navLinks.forEach((l) => l.classList.remove('active'));
+        link.classList.add('active');
+
+        if (section === 'gen') {
+            tabGen.classList.add('active');
+            tabEdit.classList.remove('active');
+            heroSubtitle.textContent = 'Transform your ideas into stunning images with AI';
+            heroEmoji.textContent = '\u{1F34C}';
+        } else {
+            tabGen.classList.remove('active');
+            tabEdit.classList.add('active');
+            heroSubtitle.textContent = 'Upload an image and transform it with AI-powered editing';
+            heroEmoji.textContent = '\u2728';
+        }
+    });
+});
 
 /* ------------------------------------------------------------------ */
 /*  Auto-resize textarea                                               */
@@ -368,7 +402,6 @@ const editUploadPreview = $('#edit-upload-preview');
 const editPreviewImg = $('#edit-preview-img');
 const removeUploadBtn = $('#remove-upload-btn');
 const editPromptInput = $('#edit-prompt-input');
-const editStyleSelect = $('#edit-style-select');
 const editBtn = $('#edit-btn');
 const editBtnText = editBtn.querySelector('.btn-text');
 const editBtnSparkle = editBtn.querySelector('.btn-sparkle');
@@ -382,6 +415,40 @@ const editResultMeta = $('#edit-result-meta');
 const editDownloadBtn = $('#edit-download-btn');
 const editExamples = $('#edit-examples');
 const editSampleCards = $$('[data-edit-prompt]');
+
+/* -- Style dropdown (pill-based, matching aspect ratio pattern) -- */
+const styleToggle = $('#style-toggle');
+const styleLabel = $('#style-label');
+const styleDropdown = $('#style-dropdown');
+const styleOptions = $$('#style-dropdown .aspect-option');
+
+let currentEditStyle = 'Photo-to-Anime';
+let currentEditStyleLabel = 'Photo to Anime';
+
+styleToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    styleDropdown.classList.toggle('hidden');
+});
+
+styleDropdown.addEventListener('click', (e) => {
+    e.stopPropagation();
+});
+
+styleOptions.forEach((opt) => {
+    opt.addEventListener('click', () => {
+        currentEditStyle = opt.dataset.style;
+        currentEditStyleLabel = opt.textContent;
+        styleLabel.textContent = currentEditStyleLabel;
+        styleOptions.forEach((o) => o.classList.remove('active'));
+        opt.classList.add('active');
+        styleDropdown.classList.add('hidden');
+    });
+});
+
+// Close style dropdown on outside click
+document.addEventListener('click', () => {
+    styleDropdown.classList.add('hidden');
+});
 
 let editGradioClient = null;
 let isEditing = false;
@@ -450,11 +517,27 @@ removeUploadBtn.addEventListener('click', (e) => {
     editUploadArea.classList.remove('has-image');
 });
 
+/* -- Auto-resize edit textarea -- */
+editPromptInput.addEventListener('input', () => {
+    editPromptInput.style.height = 'auto';
+    editPromptInput.style.height = Math.min(editPromptInput.scrollHeight, 200) + 'px';
+});
+
 /* -- Edit sample cards -- */
 editSampleCards.forEach((card) => {
     card.addEventListener('click', () => {
         editPromptInput.value = card.dataset.editPrompt;
-        editStyleSelect.value = card.dataset.editStyle;
+        // Update style dropdown to match sample
+        const style = card.dataset.editStyle;
+        styleOptions.forEach((opt) => {
+            if (opt.dataset.style === style) {
+                currentEditStyle = style;
+                currentEditStyleLabel = opt.textContent;
+                styleLabel.textContent = currentEditStyleLabel;
+                styleOptions.forEach((o) => o.classList.remove('active'));
+                opt.classList.add('active');
+            }
+        });
         editPromptInput.focus();
     });
 });
@@ -464,7 +547,7 @@ async function editImage(file, prompt, style) {
     const client = await getEditClient();
 
     const result = await client.predict("/infer", {
-        images: [file],
+        images: [{ image: file }],
         prompt: prompt,
         lora_adapter: style,
         seed: 0,
@@ -526,7 +609,7 @@ async function handleEdit() {
 
     if (isEditing) return;
 
-    const style = editStyleSelect.value;
+    const style = currentEditStyle;
 
     try {
         isEditing = true;
@@ -554,7 +637,7 @@ async function handleEdit() {
         editResultArea.classList.remove('hidden');
 
         editResultMeta.innerHTML = [
-            `<span>Style: <strong>${editStyleSelect.options[editStyleSelect.selectedIndex].text}</strong></span>`,
+            `<span>Style: <strong>${currentEditStyleLabel}</strong></span>`,
             `<span>Time: <strong>${elapsed}s</strong></span>`,
             result.seed !== null ? `<span>Seed: <strong>${result.seed}</strong></span>` : '',
         ].filter(Boolean).join('');
