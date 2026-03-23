@@ -25,6 +25,7 @@ const tabGen = $('#tab-gen');
 const tabEdit = $('#tab-edit');
 const heroSubtitle = $('#hero-subtitle');
 const heroEmoji = $('#hero-emoji');
+const heroTitle = $('#hero-title');
 
 /* -- Image Generation refs -- */
 const promptInput = $('#prompt-input');
@@ -91,12 +92,14 @@ navLinks.forEach((link) => {
             tabGen.classList.add('active');
             tabEdit.classList.remove('active');
             heroSubtitle.textContent = 'Transform your ideas into stunning images with AI';
-            heroEmoji.textContent = '\u{1F5BC}\uFE0F';
+            heroEmoji.textContent = '\u{1F34C}';
+            heroTitle.innerHTML = 'MICRO <span class="highlight">BANANA</span>';
         } else {
             tabGen.classList.remove('active');
             tabEdit.classList.add('active');
             heroSubtitle.textContent = 'Upload an image and transform it with AI-powered editing';
             heroEmoji.textContent = '\u2728';
+            heroTitle.innerHTML = 'IMAGE <span class="highlight">EDITOR</span>';
         }
     });
 });
