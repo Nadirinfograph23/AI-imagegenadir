@@ -85,7 +85,7 @@ export default function PromptInput({
   return (
     <div className="w-full max-w-3xl mx-auto">
       <div
-        className="rounded-2xl bg-white/[0.07] border border-white/10 backdrop-blur-sm overflow-hidden transition-all hover:border-white/20"
+        className="rounded-2xl bg-white/[0.07] border border-white/10 backdrop-blur-sm transition-all hover:border-white/20"
         onDrop={handleDrop}
         onDragOver={(e) => e.preventDefault()}
       >
