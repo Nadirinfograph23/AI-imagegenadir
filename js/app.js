@@ -1,6 +1,5 @@
 /**
- * MACRO BANANA - AI Image Generator
- * Powered by Z-Image-Turbo (HuggingFace Spaces)
+ * MACRO BANANA - AI Image Generator & Editor
  *
  * Development: حوامرية نذير - NADIR INFOGRAPH
  */
@@ -41,7 +40,7 @@ const aspectDropdown = $('#aspect-dropdown');
 const aspectOptions = $$('.aspect-option');
 
 const samplePrompts = $('#sample-prompts');
-const sampleCards = $$('.sample-card');
+const sampleCards = $$('#sample-prompts .sample-card');
 
 const historySection = $('#history-section');
 const historyGrid = $('#history-grid');
@@ -193,7 +192,7 @@ async function handleGenerate() {
     try {
         isGenerating = true;
         setLoading(true);
-        showStatus('Connecting to Z-Image-Turbo...', 0.1);
+        showStatus('Connecting to AI service...', 0.1);
         resultArea.classList.add('hidden');
 
         // Start progress animation
@@ -219,7 +218,6 @@ async function handleGenerate() {
 
         // Update meta info
         resultMeta.innerHTML = [
-            `<span>Model: <strong>Z-Image-Turbo</strong></span>`,
             `<span>Time: <strong>${elapsed}s</strong></span>`,
             `<span>Size: <strong>${currentWidth}x${currentHeight}</strong></span>`,
             result.seed !== null ? `<span>Seed: <strong>${result.seed}</strong></span>` : '',
@@ -348,7 +346,6 @@ function renderHistory() {
             resultImage.src = item.src;
             resultArea.classList.remove('hidden');
             resultMeta.innerHTML = [
-                `<span>Model: <strong>Z-Image-Turbo</strong></span>`,
                 `<span>Time: <strong>${item.elapsed}s</strong></span>`,
                 item.seed !== null ? `<span>Seed: <strong>${item.seed}</strong></span>` : '',
             ].filter(Boolean).join('');
@@ -357,3 +354,272 @@ function renderHistory() {
         historyGrid.appendChild(div);
     });
 }
+
+/* ================================================================== */
+/*  IMAGE EDITING SECTION                                              */
+/* ================================================================== */
+
+const EDIT_SPACE_NAME = "prithivMLmods/Qwen-Image-Edit-2511-LoRAs-Fast";
+
+const editFileInput = $('#edit-file-input');
+const editUploadArea = $('#edit-upload-area');
+const editUploadPlaceholder = $('#edit-upload-placeholder');
+const editUploadPreview = $('#edit-upload-preview');
+const editPreviewImg = $('#edit-preview-img');
+const removeUploadBtn = $('#remove-upload-btn');
+const editPromptInput = $('#edit-prompt-input');
+const editStyleSelect = $('#edit-style-select');
+const editBtn = $('#edit-btn');
+const editBtnText = editBtn.querySelector('.btn-text');
+const editBtnSparkle = editBtn.querySelector('.btn-sparkle');
+const editBtnLoading = editBtn.querySelector('.btn-loading');
+const editStatusBar = $('#edit-status-bar');
+const editStatusText = $('#edit-status-text');
+const editProgressFill = $('#edit-progress-fill');
+const editResultArea = $('#edit-result-area');
+const editResultImage = $('#edit-result-image');
+const editResultMeta = $('#edit-result-meta');
+const editDownloadBtn = $('#edit-download-btn');
+const editExamples = $('#edit-examples');
+const editSampleCards = $$('[data-edit-prompt]');
+
+let editGradioClient = null;
+let isEditing = false;
+let lastEditResultUrl = null;
+let uploadedFile = null;
+
+/* -- Gradio client for edit space -- */
+async function getEditClient() {
+    if (!editGradioClient) {
+        editGradioClient = await Client.connect(EDIT_SPACE_NAME);
+    }
+    return editGradioClient;
+}
+
+/* -- File upload handling -- */
+editUploadArea.addEventListener('click', (e) => {
+    if (!editUploadArea.classList.contains('has-image')) {
+        editFileInput.click();
+    }
+});
+
+editUploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    editUploadArea.style.borderColor = 'var(--accent)';
+});
+
+editUploadArea.addEventListener('dragleave', () => {
+    editUploadArea.style.borderColor = '';
+});
+
+editUploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    editUploadArea.style.borderColor = '';
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+        handleEditFileUpload(file);
+    }
+});
+
+editFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        handleEditFileUpload(file);
+    }
+});
+
+function handleEditFileUpload(file) {
+    uploadedFile = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        editPreviewImg.src = e.target.result;
+        editUploadPlaceholder.classList.add('hidden');
+        editUploadPreview.classList.remove('hidden');
+        editUploadArea.classList.add('has-image');
+    };
+    reader.readAsDataURL(file);
+}
+
+removeUploadBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    uploadedFile = null;
+    editPreviewImg.src = '';
+    editFileInput.value = '';
+    editUploadPreview.classList.add('hidden');
+    editUploadPlaceholder.classList.remove('hidden');
+    editUploadArea.classList.remove('has-image');
+});
+
+/* -- Edit sample cards -- */
+editSampleCards.forEach((card) => {
+    card.addEventListener('click', () => {
+        editPromptInput.value = card.dataset.editPrompt;
+        editStyleSelect.value = card.dataset.editStyle;
+        editPromptInput.focus();
+    });
+});
+
+/* -- Edit image via Gradio API -- */
+async function editImage(file, prompt, style) {
+    const client = await getEditClient();
+
+    const result = await client.predict("/infer", {
+        images: [file],
+        prompt: prompt,
+        lora_adapter: style,
+        seed: 0,
+        randomize_seed: true,
+        guidance_scale: 1.0,
+        steps: 4,
+    });
+
+    const data = result.data;
+    if (!data || data.length === 0) {
+        throw new Error('No data returned from API');
+    }
+
+    let imageUrl = null;
+    let seed = null;
+
+    const imageData = data[0];
+    if (imageData) {
+        if (imageData.url) {
+            imageUrl = imageData.url;
+        } else if (typeof imageData === 'string') {
+            imageUrl = imageData;
+        }
+    }
+
+    if (data.length > 1 && data[1] !== undefined) {
+        seed = data[1];
+    }
+
+    if (!imageUrl) {
+        throw new Error('No image returned from API');
+    }
+
+    return { imageUrl, seed };
+}
+
+/* -- Edit button handler -- */
+editBtn.addEventListener('click', handleEdit);
+
+editPromptInput.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        handleEdit();
+    }
+});
+
+async function handleEdit() {
+    if (!uploadedFile) {
+        editUploadArea.style.borderColor = 'var(--error)';
+        setTimeout(() => { editUploadArea.style.borderColor = ''; }, 2000);
+        return;
+    }
+
+    const prompt = editPromptInput.value.trim();
+    if (!prompt) {
+        editPromptInput.focus();
+        return;
+    }
+
+    if (isEditing) return;
+
+    const style = editStyleSelect.value;
+
+    try {
+        isEditing = true;
+        setEditLoading(true);
+        showEditStatus('Connecting to AI service...', 0.1);
+        editResultArea.classList.add('hidden');
+
+        let progress = 0.1;
+        const progressInterval = setInterval(() => {
+            progress = Math.min(progress + 0.02, 0.9);
+            editProgressFill.style.width = `${Math.round(progress * 100)}%`;
+        }, 600);
+
+        showEditStatus('Processing your image...', 0.3);
+
+        const startTime = Date.now();
+        const result = await editImage(uploadedFile, prompt, style);
+        clearInterval(progressInterval);
+
+        const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+
+        showEditStatus('Edit complete!', 1);
+        lastEditResultUrl = result.imageUrl;
+        editResultImage.src = result.imageUrl;
+        editResultArea.classList.remove('hidden');
+
+        editResultMeta.innerHTML = [
+            `<span>Style: <strong>${editStyleSelect.options[editStyleSelect.selectedIndex].text}</strong></span>`,
+            `<span>Time: <strong>${elapsed}s</strong></span>`,
+            result.seed !== null ? `<span>Seed: <strong>${result.seed}</strong></span>` : '',
+        ].filter(Boolean).join('');
+
+        editExamples.classList.add('hidden');
+
+        setTimeout(() => {
+            editStatusBar.classList.add('hidden');
+        }, 2000);
+
+    } catch (err) {
+        console.error('[MACRO BANANA] Edit failed:', err);
+        showEditStatus(`Error: ${err.message}`, 1);
+        editProgressFill.style.background = 'var(--error)';
+
+        editGradioClient = null;
+
+        setTimeout(() => {
+            editProgressFill.style.background = '';
+            editStatusBar.classList.add('hidden');
+        }, 5000);
+    } finally {
+        isEditing = false;
+        setEditLoading(false);
+    }
+}
+
+/* -- Edit status helpers -- */
+function showEditStatus(msg, progress) {
+    editStatusBar.classList.remove('hidden');
+    editStatusText.textContent = msg;
+    editProgressFill.style.width = `${Math.round(progress * 100)}%`;
+}
+
+function setEditLoading(loading) {
+    editBtn.disabled = loading;
+    if (loading) {
+        editBtnText.classList.add('hidden');
+        editBtnSparkle.classList.add('hidden');
+        editBtnLoading.classList.remove('hidden');
+    } else {
+        editBtnText.classList.remove('hidden');
+        editBtnSparkle.classList.remove('hidden');
+        editBtnLoading.classList.add('hidden');
+    }
+}
+
+/* -- Edit download -- */
+editDownloadBtn.addEventListener('click', async () => {
+    if (!lastEditResultUrl) return;
+
+    try {
+        const response = await fetch(lastEditResultUrl);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = `macro-banana-edit-${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    } catch (err) {
+        window.open(lastEditResultUrl, '_blank');
+    }
+});
