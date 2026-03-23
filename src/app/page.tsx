@@ -13,11 +13,27 @@ export default function Home() {
   const [images, setImages] = useState<string[]>([]);
   const [provider, setProvider] = useState('');
   const [cached, setCached] = useState(false);
+  const [currentAspectRatio, setCurrentAspectRatio] = useState('1:1');
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const historyRef = useRef<HistoryItem[]>([]);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    historyRef.current = history;
+  }, [history]);
+
+  // Clean up debounce timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
 
   // Load history from localStorage on mount
   useEffect(() => {
@@ -63,6 +79,7 @@ export default function Home() {
         setImages([]);
         setProvider('');
         setCached(false);
+        setCurrentAspectRatio(aspectRatio);
 
         try {
           const response = await fetch('/api/generate', {
@@ -100,7 +117,7 @@ export default function Home() {
               aspectRatio,
             };
 
-            const newHistory = [historyItem, ...history];
+            const newHistory = [historyItem, ...historyRef.current];
             saveHistory(newHistory);
           }
         } catch {
@@ -112,7 +129,7 @@ export default function Home() {
         }
       }, 300);
     },
-    [history, saveHistory]
+    [saveHistory]
   );
 
   const handleRerun = useCallback(
@@ -164,6 +181,7 @@ export default function Home() {
             provider={provider}
             isLoading={isGenerating}
             cached={cached}
+            aspectRatio={currentAspectRatio}
           />
 
           <div className="mt-16 mb-8 text-center">

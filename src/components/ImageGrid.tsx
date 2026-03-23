@@ -8,14 +8,30 @@ interface ImageGridProps {
   provider: string;
   isLoading: boolean;
   cached?: boolean;
+  aspectRatio?: string;
 }
+
+const ASPECT_RATIO_CLASSES: Record<string, string> = {
+  '1:1': 'aspect-square',
+  '3:4': 'aspect-[3/4]',
+  '4:3': 'aspect-[4/3]',
+  '9:16': 'aspect-[9/16]',
+  '16:9': 'aspect-[16/9]',
+  '3:2': 'aspect-[3/2]',
+  '2:3': 'aspect-[2/3]',
+  '5:4': 'aspect-[5/4]',
+  '4:5': 'aspect-[4/5]',
+  '21:9': 'aspect-[21/9]',
+};
 
 export default function ImageGrid({
   images,
   provider,
   isLoading,
   cached,
+  aspectRatio = '1:1',
 }: ImageGridProps) {
+  const aspectClass = ASPECT_RATIO_CLASSES[aspectRatio] || 'aspect-square';
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
 
   const handleDownload = useCallback((base64: string, index: number) => {
@@ -35,7 +51,7 @@ export default function ImageGrid({
           {[...Array(4)].map((_, i) => (
             <div
               key={i}
-              className="aspect-square rounded-xl bg-white/[0.05] border border-white/10 animate-pulse flex items-center justify-center"
+              className={`${aspectClass} rounded-xl bg-white/[0.05] border border-white/10 animate-pulse flex items-center justify-center`}
             >
               <div className="flex flex-col items-center gap-3">
                 <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-yellow-400" />
@@ -85,7 +101,7 @@ export default function ImageGrid({
           {images.map((img, i) => (
             <div
               key={i}
-              className="group relative aspect-square overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] transition-all hover:border-white/20"
+              className={`group relative ${aspectClass} overflow-hidden rounded-xl border border-white/10 bg-white/[0.03] transition-all hover:border-white/20`}
             >
               <img
                 src={`data:image/png;base64,${img}`}
