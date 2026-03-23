@@ -547,7 +547,7 @@ async function editImage(file, prompt, style) {
     const client = await getEditClient();
 
     const result = await client.predict("/infer", {
-        images: [file],
+        images: [{ image: file }],
         prompt: prompt,
         lora_adapter: style,
         seed: 0,
