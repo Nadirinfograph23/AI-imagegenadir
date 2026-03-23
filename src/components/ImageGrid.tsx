@@ -108,7 +108,15 @@ export default function ImageGrid({
                 alt={`Generated image ${i + 1}`}
                 className="h-full w-full object-cover"
               />
-              {/* Overlay on hover */}
+              {/* Always-visible download button */}
+              <button
+                onClick={() => handleDownload(img, i)}
+                className="absolute bottom-2 right-2 z-10 flex h-8 w-8 items-center justify-center rounded-lg bg-black/60 text-white backdrop-blur-sm hover:bg-yellow-400 hover:text-black transition-colors shadow-lg"
+                title={`Download image #${i + 1}`}
+              >
+                <Download className="h-4 w-4" />
+              </button>
+              {/* Overlay on hover with fullscreen */}
               <div className="absolute inset-0 flex items-end justify-between bg-gradient-to-t from-black/60 via-transparent to-transparent p-3 opacity-0 transition-opacity group-hover:opacity-100">
                 <span className="text-xs text-white/70">#{i + 1}</span>
                 <div className="flex gap-2">
@@ -117,12 +125,6 @@ export default function ImageGrid({
                     className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 text-white backdrop-blur-sm hover:bg-white/30 transition-colors"
                   >
                     <Maximize2 className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDownload(img, i)}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/20 text-white backdrop-blur-sm hover:bg-white/30 transition-colors"
-                  >
-                    <Download className="h-4 w-4" />
                   </button>
                 </div>
               </div>

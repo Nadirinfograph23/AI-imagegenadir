@@ -156,7 +156,7 @@ export default function PromptInput({
             <div className="flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1.5">
               <div className="h-2 w-2 rounded-full bg-green-400" />
               <span className="text-xs text-white/70">
-                {uploadedImage ? 'Image to Image' : 'SDXL'}
+                {uploadedImage ? 'Image to Image' : 'FLUX.1 / SDXL'}
               </span>
             </div>
 

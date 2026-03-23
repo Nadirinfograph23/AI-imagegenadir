@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
+  generateWithFlux,
   generateWithHuggingFaceSDXL,
+  generateWithHuggingFaceFallback,
   generateWithHuggingFacePix2Pix,
   generateWithStableHorde,
   generateWithStableHordeImg2Img,
 } from '@/lib/providers';
+import { enhancePrompt } from '@/lib/prompt-enhancer';
 import { generateCacheKey, getCachedResult, setCachedResult } from '@/lib/cache';
 import { checkRateLimit } from '@/lib/rate-limit';
 
@@ -76,57 +79,50 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Enhance the prompt automatically
+    const enhancedPrompt = enhancePrompt(prompt);
+    console.log(`Prompt enhanced: "${prompt}" -> "${enhancedPrompt.substring(0, 80)}..."`);
+
     // Generate images with fallback system (parallel)
+    // Pipeline priority: FLUX.1 -> SDXL -> HuggingFace fallback models -> Stable Horde
     const images: string[] = [];
     let successProvider = '';
     const errors: string[] = [];
     const numImages = 4;
 
-    // Helper: generate a single image with fallback
+    // Helper: generate a single image with cascading fallback
     async function generateOne(
       index: number,
-      txt2imgFn: (p: string, ar: string) => Promise<Buffer>,
-      fallbackFn: (p: string, ar: string) => Promise<Buffer>,
-      primaryName: string,
-      fallbackName: string,
+      providers: Array<{ fn: (p: string, ar: string) => Promise<Buffer>; name: string }>,
       extraPrompt: string,
       ar: string
     ): Promise<{ image: string; provider: string } | null> {
       const variantPrompt = extraPrompt + (index > 0 ? `, variation ${index + 1}` : '');
 
-      // Try primary provider
-      try {
-        const buffer = await txt2imgFn(variantPrompt, ar);
-        return { image: buffer.toString('base64'), provider: primaryName };
-      } catch (error) {
-        const errMsg = error instanceof Error ? error.message : 'Unknown error';
-        errors.push(`${primaryName} [${index}]: ${errMsg}`);
-      }
-
-      // Fallback provider
-      try {
-        const buffer = await fallbackFn(variantPrompt, ar);
-        return { image: buffer.toString('base64'), provider: fallbackName };
-      } catch (error) {
-        const errMsg = error instanceof Error ? error.message : 'Unknown error';
-        errors.push(`${fallbackName} [${index}]: ${errMsg}`);
+      for (const provider of providers) {
+        try {
+          const buffer = await provider.fn(variantPrompt, ar);
+          return { image: buffer.toString('base64'), provider: provider.name };
+        } catch (error) {
+          const errMsg = error instanceof Error ? error.message : 'Unknown error';
+          errors.push(`${provider.name} [${index}]: ${errMsg}`);
+        }
       }
 
       return null;
     }
 
     if (mode === 'text-to-image') {
-      // Run all 4 generations in parallel with fallback
+      // Pipeline: FLUX.1 -> SDXL -> HuggingFace fallback -> Stable Horde
+      const providers = [
+        { fn: (p: string, ar: string) => generateWithFlux(p, ar), name: 'FLUX.1' },
+        { fn: (p: string, ar: string) => generateWithHuggingFaceSDXL(p, ar), name: 'SDXL' },
+        { fn: (p: string, ar: string) => generateWithHuggingFaceFallback(p, ar), name: 'HuggingFace SD' },
+        { fn: (p: string, ar: string) => generateWithStableHorde(p, ar), name: 'Stable Horde' },
+      ];
+
       const promises = Array.from({ length: numImages }, (_, i) =>
-        generateOne(
-          i,
-          (p, ar) => generateWithHuggingFaceSDXL(p, ar),
-          (p, ar) => generateWithStableHorde(p, ar),
-          'HuggingFace SDXL',
-          'Stable Horde',
-          prompt,
-          aspectRatio
-        )
+        generateOne(i, providers, enhancedPrompt, aspectRatio)
       );
 
       const results = await Promise.allSettled(promises);
@@ -137,18 +133,15 @@ export async function POST(request: NextRequest) {
         }
       }
     } else {
-      // Image-to-image mode (parallel with fallback)
+      // Image-to-image mode: Pix2Pix -> Stable Horde Img2Img
       const imageData = image!;
+      const providers = [
+        { fn: (p: string) => generateWithHuggingFacePix2Pix(p, imageData), name: 'HuggingFace Pix2Pix' },
+        { fn: (p: string, ar: string) => generateWithStableHordeImg2Img(p, imageData, ar), name: 'Stable Horde Img2Img' },
+      ];
+
       const promises = Array.from({ length: numImages }, (_, i) =>
-        generateOne(
-          i,
-          (p) => generateWithHuggingFacePix2Pix(p, imageData),
-          (p, ar) => generateWithStableHordeImg2Img(p, imageData, ar),
-          'HuggingFace Pix2Pix',
-          'Stable Horde Img2Img',
-          prompt,
-          aspectRatio
-        )
+        generateOne(i, providers, enhancedPrompt, aspectRatio)
       );
 
       const results = await Promise.allSettled(promises);

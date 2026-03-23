@@ -165,7 +165,7 @@ export default function Home() {
                 Transform your ideas into stunning images with AI
               </p>
               <p className="text-center text-xs text-white/25">
-                Powered by Stable Diffusion XL &bull; Free &amp; Open Source
+                Powered by FLUX.1 &amp; SDXL &bull; Free &amp; Open Source
               </p>
             </div>
           )}

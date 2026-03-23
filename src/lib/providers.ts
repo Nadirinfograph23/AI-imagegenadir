@@ -61,6 +61,47 @@ async function fetchWithTimeout(
   }
 }
 
+// ─── FLUX.1 (Primary Model) ───────────────────────────────────────────────────
+export async function generateWithFlux(
+  prompt: string,
+  aspectRatio: string = '1:1'
+): Promise<Buffer> {
+  const apiKey = getRandomHFKey();
+  if (!apiKey) throw new Error('No HuggingFace API keys configured');
+
+  const dims = getDimensions(aspectRatio);
+
+  const response = await fetchWithTimeout(
+    'https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-dev',
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        inputs: prompt,
+        parameters: {
+          num_inference_steps: 28,
+          guidance_scale: 3.5,
+          width: dims.width,
+          height: dims.height,
+        },
+      }),
+    },
+    30000 // FLUX may need more time
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`FLUX.1 error: ${response.status} - ${errorText}`);
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
+
+// ─── SDXL (Secondary Model) ──────────────────────────────────────────────────
 export async function generateWithHuggingFaceSDXL(
   prompt: string,
   aspectRatio: string = '1:1'
@@ -100,6 +141,63 @@ export async function generateWithHuggingFaceSDXL(
   return Buffer.from(arrayBuffer);
 }
 
+// ─── HuggingFace Fallback Models (Tertiary) ──────────────────────────────────
+const HF_FALLBACK_MODELS = [
+  'runwayml/stable-diffusion-v1-5',
+  'CompVis/stable-diffusion-v1-4',
+];
+
+export async function generateWithHuggingFaceFallback(
+  prompt: string,
+  aspectRatio: string = '1:1'
+): Promise<Buffer> {
+  const apiKey = getRandomHFKey();
+  if (!apiKey) throw new Error('No HuggingFace API keys configured');
+
+  const dims = getStableHordeDimensions(aspectRatio);
+  const errors: string[] = [];
+
+  for (const model of HF_FALLBACK_MODELS) {
+    try {
+      const response = await fetchWithTimeout(
+        `https://api-inference.huggingface.co/models/${model}`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            inputs: prompt,
+            parameters: {
+              num_inference_steps: 25,
+              guidance_scale: 7.5,
+              width: dims.width,
+              height: dims.height,
+            },
+          }),
+        },
+        15000
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        errors.push(`${model}: ${response.status} - ${errorText}`);
+        continue;
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      return Buffer.from(arrayBuffer);
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : 'Unknown error';
+      errors.push(`${model}: ${errMsg}`);
+    }
+  }
+
+  throw new Error(`All HuggingFace fallback models failed: ${errors.join('; ')}`);
+}
+
+// ─── Image-to-Image Providers ────────────────────────────────────────────────
 export async function generateWithHuggingFacePix2Pix(
   prompt: string,
   imageBase64: string
