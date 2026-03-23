@@ -737,7 +737,17 @@ body {
     }
 
     .nav-links {
-        display: none;
+        display: flex;
+        gap: 2px;
+    }
+
+    .nav-link {
+        padding: 5px 10px;
+        font-size: 0.75rem;
+    }
+
+    .nav-left {
+        gap: 12px;
     }
 
     .hero-section {
