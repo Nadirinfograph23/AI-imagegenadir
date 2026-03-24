@@ -111,6 +111,12 @@ body {
     font-size: 0.75rem;
     color: var(--text-muted);
     font-weight: 500;
+    text-decoration: none;
+    transition: color var(--transition);
+}
+
+.nav-credit:hover {
+    color: var(--accent);
 }
 
 /* ===== Main Container ===== */
